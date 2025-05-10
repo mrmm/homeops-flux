@@ -33,7 +33,7 @@ nodes:
           hardwareAddr: "28:d2:44:5d:50:81"
         dhcp: false
         addresses:
-          - "192.168.69.200/25"
+          - "192.168.69.200/24"
         routes:
           - network: "0.0.0.0/0"
             gateway: "192.168.69.1"
