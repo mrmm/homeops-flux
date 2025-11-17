@@ -1,0 +1,171 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  PROXMOX_VM_MANAGER_DIR: "{{.ROOT_DIR}}/proxmox-vm-manager"
+  PROXMOX_VM_MANAGER_CONFIG: "/etc/proxmox-vm-manager/config.yaml"
+
+tasks:
+  install:
+    desc: Install Proxmox VM Manager as a system service
+    summary: |
+      Install Proxmox VM Manager
+
+      This task installs the Proxmox VM Manager application as a systemd service.
+      Requires root privileges.
+    dir: "{{.PROXMOX_VM_MANAGER_DIR}}"
+    cmds:
+      - |
+        if [ "$EUID" -ne 0 ]; then
+          echo "ERROR: This task must be run as root (use sudo)"
+          exit 1
+        fi
+      - ./install.sh
+    preconditions:
+      - sh: test -f {{.PROXMOX_VM_MANAGER_DIR}}/install.sh
+        msg: "install.sh not found in {{.PROXMOX_VM_MANAGER_DIR}}"
+
+  test:
+    desc: Test Proxmox VM Manager configuration
+    summary: |
+      Test Proxmox VM Manager configuration
+
+      Validates the configuration file and tests connection to Proxmox cluster.
+    dir: "{{.PROXMOX_VM_MANAGER_DIR}}"
+    cmds:
+      - |
+        python3 src/main.py \
+          --config {{.PROXMOX_VM_MANAGER_CONFIG}} \
+          --test \
+          --log-level INFO
+    preconditions:
+      - sh: test -f {{.PROXMOX_VM_MANAGER_CONFIG}}
+        msg: "Configuration file not found at {{.PROXMOX_VM_MANAGER_CONFIG}}"
+
+  run:
+    desc: Run Proxmox VM Manager in foreground (for testing)
+    summary: |
+      Run Proxmox VM Manager in foreground
+
+      Runs the VM manager in the foreground with debug logging.
+      Useful for testing. Press Ctrl+C to stop.
+    dir: "{{.PROXMOX_VM_MANAGER_DIR}}"
+    cmds:
+      - |
+        python3 src/main.py \
+          --config {{.PROXMOX_VM_MANAGER_CONFIG}} \
+          --log-level DEBUG
+    preconditions:
+      - sh: test -f {{.PROXMOX_VM_MANAGER_CONFIG}}
+        msg: "Configuration file not found at {{.PROXMOX_VM_MANAGER_CONFIG}}"
+
+  start:
+    desc: Start Proxmox VM Manager service
+    summary: |
+      Start Proxmox VM Manager systemd service
+
+      Starts the VM manager as a background service.
+    cmds:
+      - sudo systemctl start proxmox-vm-manager
+      - sudo systemctl status proxmox-vm-manager --no-pager
+
+  stop:
+    desc: Stop Proxmox VM Manager service
+    summary: |
+      Stop Proxmox VM Manager systemd service
+    cmds:
+      - sudo systemctl stop proxmox-vm-manager
+
+  restart:
+    desc: Restart Proxmox VM Manager service
+    summary: |
+      Restart Proxmox VM Manager systemd service
+    cmds:
+      - sudo systemctl restart proxmox-vm-manager
+      - sudo systemctl status proxmox-vm-manager --no-pager
+
+  status:
+    desc: Show Proxmox VM Manager service status
+    summary: |
+      Show status of Proxmox VM Manager systemd service
+    cmds:
+      - sudo systemctl status proxmox-vm-manager --no-pager
+
+  logs:
+    desc: Show Proxmox VM Manager logs (follow mode)
+    summary: |
+      Show and follow Proxmox VM Manager logs
+
+      Displays recent logs and follows new log entries.
+      Press Ctrl+C to stop following.
+    cmds:
+      - sudo journalctl -u proxmox-vm-manager -f
+
+  logs-recent:
+    desc: Show recent Proxmox VM Manager logs
+    summary: |
+      Show recent Proxmox VM Manager logs
+
+      Displays the last 100 log entries.
+    cmds:
+      - sudo journalctl -u proxmox-vm-manager -n 100 --no-pager
+
+  enable:
+    desc: Enable Proxmox VM Manager service to start on boot
+    summary: |
+      Enable Proxmox VM Manager service
+
+      Configures the service to start automatically on system boot.
+    cmds:
+      - sudo systemctl enable proxmox-vm-manager
+      - echo "Proxmox VM Manager enabled to start on boot"
+
+  disable:
+    desc: Disable Proxmox VM Manager service from starting on boot
+    summary: |
+      Disable Proxmox VM Manager service
+
+      Prevents the service from starting automatically on system boot.
+    cmds:
+      - sudo systemctl disable proxmox-vm-manager
+      - echo "Proxmox VM Manager disabled from starting on boot"
+
+  uninstall:
+    desc: Uninstall Proxmox VM Manager
+    summary: |
+      Uninstall Proxmox VM Manager
+
+      Stops and removes the service, but keeps configuration files.
+      Requires root privileges.
+    cmds:
+      - |
+        if [ "$EUID" -ne 0 ]; then
+          echo "ERROR: This task must be run as root (use sudo)"
+          exit 1
+        fi
+      - systemctl stop proxmox-vm-manager || true
+      - systemctl disable proxmox-vm-manager || true
+      - rm -f /etc/systemd/system/proxmox-vm-manager.service
+      - systemctl daemon-reload
+      - rm -rf /opt/proxmox-vm-manager
+      - echo "Proxmox VM Manager uninstalled (config preserved at /etc/proxmox-vm-manager)"
+
+  deps:
+    desc: Install Python dependencies for Proxmox VM Manager
+    summary: |
+      Install Python dependencies
+
+      Installs required Python packages using pip3.
+    dir: "{{.PROXMOX_VM_MANAGER_DIR}}"
+    cmds:
+      - pip3 install -r requirements.txt
+
+  edit-config:
+    desc: Edit Proxmox VM Manager configuration
+    summary: |
+      Edit configuration file
+
+      Opens the configuration file in your default editor.
+    cmds:
+      - ${EDITOR:-nano} {{.PROXMOX_VM_MANAGER_CONFIG}}

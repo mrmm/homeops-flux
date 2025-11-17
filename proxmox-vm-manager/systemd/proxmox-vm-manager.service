@@ -1,0 +1,30 @@
+[Unit]
+Description=Proxmox VM Auto-Start Manager
+Documentation=https://github.com/yourusername/homeops-flux/tree/main/proxmox-vm-manager
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+# Path to the application
+WorkingDirectory=/opt/proxmox-vm-manager
+ExecStart=/usr/bin/python3 /opt/proxmox-vm-manager/src/main.py --config /etc/proxmox-vm-manager/config.yaml --log-level INFO
+
+# Restart policy
+Restart=on-failure
+RestartSec=30
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=proxmox-vm-manager
+
+[Install]
+WantedBy=multi-user.target

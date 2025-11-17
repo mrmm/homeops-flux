@@ -1,0 +1,56 @@
+# Proxmox VM Auto-Start Manager Configuration
+
+# Proxmox cluster connection settings
+proxmox:
+  # Proxmox host (IP or hostname)
+  host: "192.168.1.100"
+
+  # Authentication type: "token" or "password"
+  auth_type: "token"
+
+  # User for authentication (format: user@realm, e.g., root@pam or automation@pve)
+  user: "root@pam"
+
+  # For token authentication (recommended for production)
+  token_name: "automation"
+  token_value: "your-token-value-here"
+
+  # For password authentication (less secure, use for testing only)
+  # password: "your-password-here"
+
+  # Verify SSL certificates (set to false for self-signed certs in testing)
+  verify_ssl: true
+
+# VM Manager settings
+vm_manager:
+  # Enable automatic VM startup
+  auto_start_enabled: true
+
+  # Enable automatic migration to better nodes
+  auto_migrate_enabled: true
+
+  # How often to check VM states (seconds)
+  monitor_interval_seconds: 30
+
+  # Maximum number of startup attempts within the attempt window
+  max_startup_attempts: 3
+
+  # Time window for counting startup attempts (seconds)
+  # Default: 5 minutes
+  startup_attempt_window_seconds: 300
+
+  # Minimum score difference to trigger migration when auto_migrate is enabled
+  # Higher values mean less aggressive migration
+  # Range: 0-100, recommended: 15-30
+  migration_threshold_score: 20.0
+
+  # VM tags that indicate a VM should be managed by this system
+  # A VM must have at least one of these tags to be managed
+  managed_tags:
+    - "auto-start"
+    - "managed"
+
+  # VM tags that exclude a VM from management (takes precedence)
+  excluded_tags:
+    - "no-auto-start"
+    - "manual"

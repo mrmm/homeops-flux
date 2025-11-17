@@ -1,0 +1,10 @@
+# Proxmox VM Auto-Start Manager - Python Dependencies
+
+# Proxmox API client
+proxmoxer>=2.0.0
+
+# HTTP client for Proxmoxer
+requests>=2.31.0
+
+# YAML configuration parsing
+PyYAML>=6.0
